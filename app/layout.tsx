@@ -1,15 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+    DM_Serif_Display,
+    DM_Mono,
+    Outfit,
+    Syne,
+    Inter,
+} from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+const dmSerif = DM_Serif_Display({
     subsets: ["latin"],
+    weight: ["400"],
+    variable: "--font-dm-serif",
 });
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
+const dmMono = DM_Mono({
     subsets: ["latin"],
+    weight: ["400", "500"],
+    variable: "--font-dm-mono",
+});
+const outfit = Outfit({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600"],
+    variable: "--font-outfit",
+});
+const syne = Syne({
+    subsets: ["latin"],
+    weight: ["400", "700", "800"],
+    variable: "--font-syne",
+});
+const inter = Inter({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600"],
+    variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -19,22 +41,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
     children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en">
-            <head>
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syne:wght@400;700;800&display=swap"
-                    rel="stylesheet"
-                />
-            </head>
-            <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-            >
-                {children}
-            </body>
+        <html
+            lang="en"
+            className={`${dmSerif.variable} ${dmMono.variable} ${outfit.variable} ${syne.variable} ${inter.variable}`}
+        >
+            <body className="antialiased">{children}</body>
         </html>
     );
 }

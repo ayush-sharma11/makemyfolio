@@ -105,7 +105,7 @@ export default function Works({ projects = DEFAULT_PROJECTS }: WorksProps) {
                         }}
                     >
                         Defined{" "}
-                        <span style={{ color: "rgba(0,0,0,0.2)" }}>—</span>
+                        <span style={{ color: "rgba(0,0,0,0.2)" }}>-</span>
                         <br />
                         Horizons
                         <span style={{ color: "rgba(0,0,0,0.2)" }}>.</span>

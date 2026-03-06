@@ -6,6 +6,8 @@ interface HeroProps {
     name?: string;
     title?: string;
     openToWork?: boolean;
+    projectCount?: number;
+    awardsCount?: number;
 }
 
 function useCounter(target: number, duration = 1400, delay = 750): number {
@@ -30,10 +32,12 @@ export default function Hero({
     name = "YOUR NAME",
     title = "Developer & Designer",
     openToWork = true,
+    projectCount = 42,
+    awardsCount = 18,
 }: HeroProps) {
     const bgRef = useRef<HTMLDivElement>(null);
-    const projects = useCounter(42);
-    const awards = useCounter(18);
+    const projects = useCounter(projectCount);
+    const awards = useCounter(awardsCount);
     const titleParts = name.toUpperCase().split(" ");
 
     useEffect(() => {
@@ -57,7 +61,6 @@ export default function Hero({
                 overflow: "hidden",
             }}
         >
-            {/* Background */}
             <div
                 ref={bgRef}
                 style={{
@@ -71,7 +74,6 @@ export default function Hero({
                 }}
             />
 
-            {/* Grid overlay */}
             <div
                 style={{
                     position: "absolute",
@@ -82,7 +84,6 @@ export default function Hero({
                 }}
             />
 
-            {/* Open to work badge */}
             {openToWork && (
                 <div
                     style={{
@@ -116,7 +117,6 @@ export default function Hero({
                 </div>
             )}
 
-            {/* Scroll hint */}
             <div
                 style={{
                     position: "absolute",
@@ -144,7 +144,6 @@ export default function Hero({
                 />
             </div>
 
-            {/* Main content */}
             <div
                 style={{
                     position: "relative",
@@ -192,6 +191,94 @@ export default function Hero({
                         </>
                     )}
                 </h1>
+            </div>
+            <div
+                style={{
+                    position: "absolute",
+                    right: 32,
+                    bottom: 56,
+                    width: 284,
+                    background: "rgba(10,10,10,0.86)",
+                    border: "1px solid rgba(255,255,255,0.09)",
+                    borderRadius: 16,
+                    padding: "22px 22px 18px",
+                    backdropFilter: "blur(20px)",
+                    zIndex: 10,
+                }}
+            >
+                <p
+                    style={{
+                        fontSize: 13,
+                        color: "rgba(255,255,255,0.65)",
+                        lineHeight: 1.68,
+                        marginBottom: 18,
+                    }}
+                >
+                    Building things for the web. Clarity, performance, and
+                    craft.
+                </p>
+                <div
+                    style={{
+                        display: "flex",
+                        gap: 32,
+                        paddingBottom: 16,
+                        borderBottom: "1px solid rgba(255,255,255,0.07)",
+                        marginBottom: 16,
+                    }}
+                >
+                    {[
+                        { label: "Projects", value: projects },
+                        { label: "Awards", value: awards },
+                    ].map(({ label, value }) => (
+                        <div key={label}>
+                            <label
+                                style={{
+                                    display: "block",
+                                    fontSize: 9,
+                                    letterSpacing: "0.14em",
+                                    textTransform: "uppercase",
+                                    color: "rgba(255,255,255,0.36)",
+                                    marginBottom: 3,
+                                }}
+                            >
+                                {label}
+                            </label>
+                            <span
+                                style={{
+                                    fontFamily: "'Syne', sans-serif",
+                                    fontSize: 30,
+                                    fontWeight: 700,
+                                    color: "#fff",
+                                }}
+                            >
+                                {value}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <a
+                    href="#works"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        color: "rgba(255,255,255,0.78)",
+                        fontSize: 12,
+                        textDecoration: "none",
+                    }}
+                >
+                    Explore Portfolio
+                    <svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        width={14}
+                        height={14}
+                    >
+                        <path d="M3 8h10M9 4l4 4-4 4" />
+                    </svg>
+                </a>
             </div>
             <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }`}</style>
         </section>

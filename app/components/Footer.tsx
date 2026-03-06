@@ -21,7 +21,6 @@ export default function Footer({
                     marginBottom: 28,
                 }}
             >
-                {/* Brand */}
                 <div>
                     <div
                         style={{
@@ -119,7 +118,6 @@ export default function Footer({
                     </div>
                 </div>
 
-                {/* Link columns */}
                 {[
                     {
                         title: "Portfolio",

@@ -52,22 +52,22 @@ function buildPrompt(body: GenerateRequest): string {
 You are a professional copywriter specializing in developer portfolios. Your job is to transform raw, unpolished input into sharp, confident, minimal portfolio copy.
 
 ═══════════════════════════════════════════
-TONE GUIDE — READ THIS CAREFULLY
+TONE GUIDE - READ THIS CAREFULLY
 ═══════════════════════════════════════════
 The portfolio uses a dark, minimal, architectural aesthetic. The copy must match:
 - SHORT sentences. No filler.
 - Confident, not arrogant. Let the work speak.
 - First-person or implied first-person only.
 - NEVER use these words: passionate, leverage, dynamic, synergy, innovative, results-driven, detail-oriented, hard-working, team player, self-starter, go-getter, guru, ninja, rockstar, wizard.
-- NEVER start the bio with "I am a..." or "I'm a..." — this is clichéd.
+- NEVER start the bio with "I am a..." or "I'm a..." - this is clichéd.
 - DO NOT invent fake achievements, companies, awards, or projects the user has not mentioned.
 - Keep technical terms accurate. If someone says "React", say "React", not "JavaScript frameworks".
 
 ═══════════════════════════════════════════
-WHAT GOOD COPY LOOKS LIKE — EXAMPLES
+WHAT GOOD COPY LOOKS LIKE - EXAMPLES
 ═══════════════════════════════════════════
 BAD bio: "I am a passionate full-stack developer with 3 years of experience who loves building innovative web applications."
-GOOD bio: "Three years building web products that people actually use. I care about the gap between design and engineering — the part most developers skip."
+GOOD bio: "Three years building web products that people actually use. I care about the gap between design and engineering - the part most developers skip."
 
 BAD bio: "I'm a self-motivated software engineer skilled in React, Node.js, and AWS who is passionate about delivering high-quality solutions."
 GOOD bio: "Software engineer with a bias for shipping. React and Node.js on most days. AWS when things need to scale."
@@ -84,7 +84,7 @@ INPUT DATA
 Name: ${body.name}
 Current title: ${body.title}
 Bio (raw, may be rough): ${
-        body.bio || "Not provided — infer from their skills and experience."
+        body.bio || "Not provided - infer from their skills and experience."
     }
 
 Skills: ${body.skills
@@ -97,9 +97,9 @@ ${body.projects
         (p, i) => `  ${i + 1}. ${p.name}${p.language ? ` [${p.language}]` : ""}
      Description: ${
          p.description ||
-         "No description provided — write something plausible based on the repo name and language."
+         "No description provided - write something plausible based on the repo name and language."
      }
-     URL: ${p.url}`
+     URL: ${p.url}`,
     )
     .join("\n")}
 
@@ -109,7 +109,7 @@ ${body.experience
         (e, i) =>
             `  ${i + 1}. ${e.title} at ${e.company} (${e.location}, ${
                 e.period
-            }, ${e.type})`
+            }, ${e.type})`,
     )
     .join("\n")}
 
@@ -122,7 +122,7 @@ For the bio: 2-3 sentences max. Sharp, direct, specific. Reference their actual 
 
 For the title: Refine it to max 4 words. Keep it accurate to their actual role. Examples: "Frontend Engineer", "Full-Stack Developer", "Software Engineer", "UI Engineer & Designer".
 
-For each project: Write ONE punchy sentence (max 15 words) that says what it does and why it exists. Be specific. If no description was given, infer from the repo name and language — but keep it grounded, not fabricated.
+For each project: Write ONE punchy sentence (max 15 words) that says what it does and why it exists. Be specific. If no description was given, infer from the repo name and language - but keep it grounded, not fabricated.
 
 For each skill: Assign a tier based on years and proficiency:
 - Tier S: proficiency >= 85 AND years >= 3
@@ -130,18 +130,18 @@ For each skill: Assign a tier based on years and proficiency:
 - Tier B: everything else
 
 For each project status, pick the most accurate:
-- "Shipped" — it is complete and deployed
-- "In Progress" — actively being built
-- "Open Source" — public repo, community focus
-- "Archived" — no longer maintained
+- "Shipped" - it is complete and deployed
+- "In Progress" - actively being built
+- "Open Source" - public repo, community focus
+- "Archived" - no longer maintained
 
 For each project location, pick:
-- "GitHub" — personal or open source
-- "Work" — built professionally
-- "Personal" — personal project not on GitHub
+- "GitHub" - personal or open source
+- "Work" - built professionally
+- "Personal" - personal project not on GitHub
 
 ═══════════════════════════════════════════
-OUTPUT FORMAT — CRITICAL
+OUTPUT FORMAT - CRITICAL
 ═══════════════════════════════════════════
 Return ONLY a valid JSON object.
 No markdown. No backticks. No code fences. No explanation. No text before or after the JSON.
@@ -149,21 +149,21 @@ Start your response with { and end with }
 
 The JSON must match this exact structure:
 {
-  "bio": "string — 2-3 sentences, sharp and direct",
-  "title": "string — max 4 words",
+  "bio": "string - 2-3 sentences, sharp and direct",
+  "title": "string - max 4 words",
   "projects": [
     {
-      "name": "string — exact repo name, unchanged",
-      "description": "string — one punchy sentence, max 15 words",
+      "name": "string - exact repo name, unchanged",
+      "description": "string - one punchy sentence, max 15 words",
       "status": "Shipped | In Progress | Open Source | Archived",
       "location": "GitHub | Work | Personal"
     }
   ],
   "skills": [
     {
-      "name": "string — exact skill name, unchanged",
+      "name": "string - exact skill name, unchanged",
       "category": "Frontend | Backend | Language | DevOps | Design | Other",
-      "years": "string — e.g. 2 yrs",
+      "years": "string - e.g. 2 yrs",
       "proficiency": number between 0 and 100,
       "tier": "S | A | B"
     }
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
         if (!body.name || !body.skills?.length || !body.projects?.length) {
             return NextResponse.json(
                 { error: "Missing required fields: name, skills, or projects" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
             console.error("Gemini returned non-JSON:", cleaned);
             return NextResponse.json(
                 { error: "AI returned invalid format. Please try again." },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
         ) {
             return NextResponse.json(
                 { error: "AI response was incomplete. Please try again." },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
             {
                 error: "Failed to generate portfolio content. Please try again.",
             },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

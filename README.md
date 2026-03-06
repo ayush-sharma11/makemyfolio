@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# mkfolio
 
-## Getting Started
+An AI-powered portfolio generator. Paste your GitHub username, pick your best projects, fill in your details - Gemini rewrites everything into sharp, minimal copy. Download a single self-contained HTML file and host it anywhere.
 
-First, run the development server:
+**[Live Demo](https://mkfolio.vercel.app)** · **[Generate yours](https://mkfolio.vercel.app/generate)**
+
+![mkfolio preview](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&q=80&auto=format)
+
+---
+
+## How it works
+
+1. **Connect GitHub** - enter your username, we fetch your repos automatically
+2. **Pick projects** - select up to 6 repos to feature on your portfolio
+3. **Fill details** - name, bio, skills, experience, optional favicon
+4. **Generate** - Gemini rewrites everything into clean, minimal copy
+5. **Download** - get a single `portfolio.html` file, host it anywhere
+
+---
+
+## Stack
+
+- **Framework** - Next.js 15 (App Router)
+- **Language** - TypeScript
+- **AI** - Google Gemini 2.5 Flash via `@google/genai`
+- **Data** - GitHub REST API (no auth required for public repos)
+- **Styling** - inline styles + CSS-in-JS (no Tailwind, no external CSS)
+- **Fonts** - DM Serif Display, DM Mono, Outfit via `next/font/google`
+- **Deploy** - Vercel
+
+---
+
+## Getting started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/yourusername/mkfolio.git
+cd mkfolio
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Get a Gemini API key
+
+- Go to [aistudio.google.com](https://aistudio.google.com)
+- Click **Get API Key** → **Create API key**
+- Free tier: 250 requests/day, no credit card needed
+
+### 4. Add environment variables
+
+Create a `.env.local` file in the root:
+
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+```
+
+### 5. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+app/
+├── page.tsx                  # Landing page
+├── generate/
+│   └── page.tsx              # 4-step generator UI
+├── api/
+│   ├── github/route.ts       # Fetches GitHub user + repos
+│   └── generate/route.ts     # Calls Gemini, returns rewritten content
+├── components/
+│   ├── Navbar.tsx
+│   ├── Hero.tsx
+│   ├── Works.tsx
+│   ├── Skills.tsx
+│   ├── Experience.tsx
+│   └── Footer.tsx
+└── lib/
+    └── export.ts             # Generates + downloads self-contained HTML
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Testing the AI prompt
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You can test the Gemini prompt without running the full Next.js server:
 
-## Deploy on Vercel
+```bash
+GOOGLE_API_KEY=your_key node test-generate.mjs
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Edit the mock input at the top of `test-generate.mjs` to test different inputs.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Deploying to Vercel
+
+```bash
+npm install -g vercel
+vercel
+```
+
+Add `GOOGLE_API_KEY` in your Vercel project settings under **Environment Variables**.
+
+---
+
+## Output
+
+The downloaded `portfolio.html` is:
+
+- Fully self-contained - no build step, no dependencies
+- Responsive across all screen sizes
+- Dark by default with grain texture and scroll-reveal animations
+- Sections: Hero, Projects, Skills (with S/A/B tiers), Experience
+- Custom favicon support or default mkfolio favicon
+- "Built with mkfolio" credit in the footer
+
+---
+
+## License
+
+MIT

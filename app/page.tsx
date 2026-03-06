@@ -1,112 +1,1148 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Works from "./components/Works";
-import Skills from "./components/Skills";
-import Experience from "./components/Experience";
-import Methodology from "./components/Methodology";
-import Footer from "./components/Footer";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
-const DATA = {
-    name: "YOUR NAME",
-    title: "Frontend Developer & Designer",
-    openToWork: true,
-    email: "ayush@example.com",
+const STEPS = [
+    {
+        num: "01",
+        label: "Connect GitHub",
+        desc: "Paste your username. We fetch your repos, stars, and languages automatically.",
+    },
+    {
+        num: "02",
+        label: "Pick & Fill",
+        desc: "Choose which projects to feature. Add your bio, skills, and experience - rough is fine.",
+    },
+    {
+        num: "03",
+        label: "AI Rewrites",
+        desc: "We sharpen every word. No clichés, no filler. Just copy that sounds like you, but better.",
+    },
+    {
+        num: "04",
+        label: "Download",
+        desc: "One self-contained HTML file. Host on GitHub Pages, Vercel, or Netlify in minutes.",
+    },
+];
 
-    projects: [
-        {
-            name: "Portfolio Generator",
-            status: "Shipped",
-            location: "GitHub",
-            category: "Personal",
-            image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
-        },
-        {
-            name: "Design System",
-            status: "In Progress",
-            location: "Remote",
-            category: "Work",
-            image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
-        },
-        {
-            name: "Open Source CLI",
-            status: "Open Source",
-            location: "Global",
-            category: "Experimental",
-            image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80",
-        },
-    ],
+const FEATURES = [
+    {
+        icon: "◈",
+        title: "GitHub Import",
+        desc: "Repos pulled automatically. No copy-pasting project names.",
+    },
+    {
+        icon: "◎",
+        title: "AI Copywriting",
+        desc: "We rewrite your bio and descriptions into sharp, minimal copy.",
+    },
+    {
+        icon: "▣",
+        title: "Zero Lock-in",
+        desc: "You get a plain HTML file. No accounts, no subscriptions, no platforms.",
+    },
+    {
+        icon: "◐",
+        title: "Dark by Default",
+        desc: "Architectural template designed to make your work look expensive.",
+    },
+    {
+        icon: "◇",
+        title: "Tier System",
+        desc: "Skills ranked S/A/B with animated proficiency bars. Shows depth at a glance.",
+    },
+    {
+        icon: "○",
+        title: "One Click Deploy",
+        desc: "Drop the file on Vercel, Netlify or GitHub Pages. Live in under a minute.",
+    },
+];
 
-    skills: [
-        {
-            name: "React / Next.js",
-            category: "Frontend",
-            proficiency: 90,
-            years: "3 yrs",
-            projects: "12+",
-            tier: "S",
-            image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=200&q=80",
-        },
-        {
-            name: "TypeScript",
-            category: "Language",
-            proficiency: 80,
-            years: "2 yrs",
-            projects: "8+",
-            tier: "A",
-            image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=200&q=80",
-        },
-        {
-            name: "Node.js",
-            category: "Backend",
-            proficiency: 70,
-            years: "2 yrs",
-            projects: "6+",
-            tier: "A",
-            image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=80",
-        },
-    ],
+function useInView(ref: React.RefObject<HTMLElement | null>, threshold = 0.15) {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(
+            ([e]) => {
+                if (e.isIntersecting) {
+                    setVisible(true);
+                    obs.disconnect();
+                }
+            },
+            { threshold },
+        );
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [ref, threshold]);
+    return visible;
+}
 
-    experience: [
-        {
-            title: "Senior Frontend Engineer",
-            company: "Acme Corp",
-            location: "Remote",
-            type: "Full-Time",
-            period: "2023–Present",
-        },
-        {
-            title: "UI Developer",
-            company: "Studio XYZ",
-            location: "New York",
-            type: "Contract",
-            period: "2022–2023",
-        },
-        {
-            title: "Junior Developer",
-            company: "StartupABC",
-            location: "London",
-            type: "Full-Time",
-            period: "2021–2022",
-        },
-    ],
-};
+export default function LandingPage() {
+    const heroRef = useRef<HTMLDivElement>(null);
+    const stepsRef = useRef<HTMLDivElement>(null);
+    const featuresRef = useRef<HTMLDivElement>(null);
+    const ctaRef = useRef<HTMLDivElement>(null);
 
-export default function Home() {
+    const stepsVisible = useInView(stepsRef);
+    const featuresVisible = useInView(featuresRef);
+    const ctaVisible = useInView(ctaRef);
+
+    const tickerItems = [
+        "GitHub Import",
+        "AI Rewriting",
+        "Dark Template",
+        "HTML Export",
+        "Free Forever",
+    ];
+
     return (
         <>
-            <Navbar name={DATA.name} />
-            <Hero
-                name={DATA.name}
-                title={DATA.title}
-                openToWork={DATA.openToWork}
-            />
-            <Works projects={DATA.projects} />
-            <Skills skills={DATA.skills} />
-            <Experience experience={DATA.experience} />
-            <Methodology />
-            <Footer name={DATA.name} email={DATA.email} />
+            <style>{`
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { background: #080808; color: #e8e3dc; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+
+        ::selection { background: #e8e3dc; color: #080808; }
+
+        .grain {
+          position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0.032;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(32px); }
+          to { opacity: 1; transform: none; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideLeft {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        @keyframes tickIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: none; }
+        }
+
+        .hero-eyebrow { animation: fadeUp 0.7s 0.1s both; }
+        .hero-title { animation: fadeUp 0.8s 0.2s both; }
+        .hero-sub { animation: fadeUp 0.7s 0.38s both; }
+        .hero-cta { animation: fadeUp 0.7s 0.5s both; }
+        .hero-badge { animation: fadeIn 0.6s 0.7s both; }
+
+        .step-card {
+          opacity: 0; transform: translateY(24px);
+          transition: opacity 0.6s, transform 0.6s;
+        }
+        .step-card.visible { opacity: 1; transform: none; }
+
+        .feature-card {
+          opacity: 0; transform: translateY(20px);
+          transition: opacity 0.5s, transform 0.5s;
+        }
+        .feature-card.visible { opacity: 1; transform: none; }
+
+        .cta-section {
+          opacity: 0; transform: translateY(28px);
+          transition: opacity 0.7s, transform 0.7s;
+        }
+        .cta-section.visible { opacity: 1; transform: none; }
+
+        .ticker-wrap {
+          overflow: hidden;
+          white-space: nowrap;
+          border-top: 1px solid #1c1c1c;
+          border-bottom: 1px solid #1c1c1c;
+          padding: 14px 0;
+          background: #0d0d0d;
+        }
+        .ticker-track {
+          display: inline-flex;
+          gap: 64px;
+          animation: slideLeft 18s linear infinite;
+        }
+        .ticker-item {
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #3a3a3a;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+        .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: #3a3a3a; flex-shrink: 0; }
+
+        .btn-primary {
+          display: inline-flex; align-items: center; gap: 10px;
+          background: #e8e3dc; color: #080808;
+          border: none; border-radius: 999px;
+          padding: 14px 28px; font-size: 14px; font-weight: 600;
+          cursor: pointer; text-decoration: none;
+          font-family: 'Outfit', sans-serif;
+          transition: background 0.2s, transform 0.2s, gap 0.25s;
+        }
+        .btn-primary:hover { background: #fff; transform: translateY(-2px); gap: 16px; }
+
+        .btn-ghost {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: transparent; color: #666;
+          border: 1px solid #222; border-radius: 999px;
+          padding: 13px 24px; font-size: 13px;
+          cursor: pointer; text-decoration: none;
+          font-family: 'Outfit', sans-serif;
+          transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-ghost:hover { border-color: #444; color: #e8e3dc; }
+
+        .nav-link {
+          color: #555; font-size: 13px; text-decoration: none;
+          transition: color 0.2s;
+        }
+        .nav-link:hover { color: #e8e3dc; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+          .nav-links-desktop { display: none !important; }
+          .steps-grid { grid-template-columns: 1fr 1fr !important; }
+          .features-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 640px) {
+          .nav-links-desktop { display: none !important; }
+          .steps-grid { grid-template-columns: 1fr !important; }
+          .features-grid { grid-template-columns: 1fr !important; }
+          .hero-badges { gap: 20px !important; }
+          .cta-inner { padding: 48px 24px !important; }
+          .mockup-card { display: none !important; }
+          .footer-inner { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; }
+        }
+        @media (max-width: 480px) {
+          .hero-cta-row { flex-direction: column !important; }
+          .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+        }
+      `}</style>
+
+            <div className="grain" />
+
+            <nav
+                style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 100,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "18px 24px",
+                    borderBottom: "1px solid #111",
+                    background: "rgba(8,8,8,0.88)",
+                    backdropFilter: "blur(20px)",
+                }}
+            >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                        style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: "50%",
+                            background: "#e8e3dc",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <svg
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="#080808"
+                            strokeWidth="2.4"
+                            width={12}
+                            height={12}
+                        >
+                            <circle cx="7" cy="7" r="3.5" />
+                            <circle
+                                cx="7"
+                                cy="7"
+                                r="1"
+                                fill="#080808"
+                                stroke="none"
+                            />
+                        </svg>
+                    </div>
+                    <span
+                        style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: 18,
+                            color: "#e8e3dc",
+                            letterSpacing: "-0.01em",
+                        }}
+                    >
+                        mkfolio
+                    </span>
+                </div>
+
+                <div
+                    className="nav-links-desktop"
+                    style={{ display: "flex", gap: 32 }}
+                >
+                    <a href="#how" className="nav-link">
+                        How it works
+                    </a>
+                    <a href="#features" className="nav-link">
+                        Features
+                    </a>
+                    <a href="https://github.com" className="nav-link">
+                        GitHub
+                    </a>
+                </div>
+
+                <Link
+                    href="/generate"
+                    className="btn-primary"
+                    style={{ padding: "10px 20px", fontSize: 13 }}
+                >
+                    Generate Free
+                    <svg
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        width={12}
+                        height={12}
+                    >
+                        <path d="M2 7h10M7 2l5 5-5 5" />
+                    </svg>
+                </Link>
+            </nav>
+
+            <section
+                ref={heroRef}
+                style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    padding: "120px 24px 80px",
+                    position: "relative",
+                    overflow: "hidden",
+                }}
+            >
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
+                        background:
+                            "repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(255,255,255,0.013) 79px,rgba(255,255,255,0.013) 80px), repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(255,255,255,0.013) 79px,rgba(255,255,255,0.013) 80px)",
+                    }}
+                />
+
+                <div
+                    style={{
+                        position: "absolute",
+                        top: "20%",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: 600,
+                        height: 600,
+                        borderRadius: "50%",
+                        background:
+                            "radial-gradient(circle, rgba(232,227,220,0.04) 0%, transparent 70%)",
+                        pointerEvents: "none",
+                    }}
+                />
+
+                <div
+                    style={{
+                        maxWidth: 860,
+                        margin: "0 auto",
+                        width: "100%",
+                        position: "relative",
+                    }}
+                >
+                    <div
+                        className="hero-eyebrow"
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            marginBottom: 28,
+                        }}
+                    >
+                        <div
+                            style={{ width: 28, height: 1, background: "#333" }}
+                        />
+                        <span
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.22em",
+                                textTransform: "uppercase",
+                                color: "#555",
+                            }}
+                        >
+                            AI Portfolio Generator
+                        </span>
+                    </div>
+
+                    <h1
+                        className="hero-title"
+                        style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: "clamp(52px, 8.5vw, 112px)",
+                            lineHeight: 0.95,
+                            letterSpacing: "-0.02em",
+                            color: "#e8e3dc",
+                            marginBottom: 36,
+                        }}
+                    >
+                        Your portfolio,
+                        <br />
+                        <span style={{ color: "#333" }}>rewritten</span> by AI.
+                    </h1>
+
+                    <p
+                        className="hero-sub"
+                        style={{
+                            fontSize: "clamp(15px, 1.6vw, 18px)",
+                            color: "#666",
+                            lineHeight: 1.75,
+                            maxWidth: 520,
+                            marginBottom: 44,
+                        }}
+                    >
+                        Paste your GitHub username. Pick your projects. Let us
+                        rewrite everything into sharp, minimal copy. Download a
+                        single HTML file and ship it.
+                    </p>
+
+                    <div
+                        className="hero-cta hero-cta-row"
+                        style={{
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <Link href="/generate" className="btn-primary">
+                            Build My Portfolio
+                            <svg
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                width={13}
+                                height={13}
+                            >
+                                <path d="M2 7h10M7 2l5 5-5 5" />
+                            </svg>
+                        </Link>
+                        <a href="#how" className="btn-ghost">
+                            See how it works
+                        </a>
+                    </div>
+
+                    <div
+                        className="hero-badge"
+                        style={{
+                            display: "flex",
+                            gap: 24,
+                            marginTop: 52,
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        {[
+                            { val: "Free", label: "No credit card" },
+                            { val: "~2 min", label: "To generate" },
+                            { val: "1 file", label: "Self-contained HTML" },
+                        ].map(({ val, label }) => (
+                            <div
+                                key={val}
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 3,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Serif Display', serif",
+                                        fontSize: 26,
+                                        color: "#e8e3dc",
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    {val}
+                                </span>
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Mono', monospace",
+                                        fontSize: 10,
+                                        letterSpacing: "0.14em",
+                                        textTransform: "uppercase",
+                                        color: "#444",
+                                    }}
+                                >
+                                    {label}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div
+                    style={{
+                        position: "absolute",
+                        right: 40,
+                        bottom: 60,
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 10,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "#2a2a2a",
+                        writingMode: "vertical-rl",
+                    }}
+                >
+                    Powered by AI
+                </div>
+            </section>
+
+            <div className="ticker-wrap">
+                <div className="ticker-track">
+                    {[
+                        ...tickerItems,
+                        ...tickerItems,
+                        ...tickerItems,
+                        ...tickerItems,
+                    ].map((item, i) => (
+                        <span key={i} className="ticker-item">
+                            {item}
+                            <span className="ticker-dot" />
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            <section
+                id="how"
+                ref={stepsRef}
+                style={{
+                    padding: "112px 40px",
+                    maxWidth: 1100,
+                    margin: "0 auto",
+                }}
+            >
+                <div style={{ marginBottom: 64 }}>
+                    <p
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            letterSpacing: "0.22em",
+                            textTransform: "uppercase",
+                            color: "#444",
+                            marginBottom: 16,
+                        }}
+                    >
+                        How it works
+                    </p>
+                    <h2
+                        style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: "clamp(36px, 5vw, 60px)",
+                            color: "#e8e3dc",
+                            lineHeight: 1,
+                            letterSpacing: "-0.02em",
+                        }}
+                    >
+                        Four steps.
+                        <br />
+                        <span style={{ color: "#333" }}>One portfolio.</span>
+                    </h2>
+                </div>
+
+                <div
+                    className="steps-grid"
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: 2,
+                    }}
+                >
+                    {STEPS.map((step, i) => (
+                        <div
+                            key={step.num}
+                            className={`step-card ${stepsVisible ? "visible" : ""}`}
+                            style={{
+                                transitionDelay: `${i * 0.1}s`,
+                                background: "#0d0d0d",
+                                border: "1px solid #161616",
+                                borderRadius:
+                                    i === 0
+                                        ? "14px 2px 2px 14px"
+                                        : i === 3
+                                          ? "2px 14px 14px 2px"
+                                          : "2px",
+                                padding: "32px 28px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontFamily: "'DM Mono', monospace",
+                                    fontSize: 11,
+                                    color: "#333",
+                                    letterSpacing: "0.1em",
+                                    marginBottom: 20,
+                                }}
+                            >
+                                {step.num}
+                            </div>
+                            <div
+                                style={{
+                                    width: 32,
+                                    height: 1,
+                                    background: "#222",
+                                    marginBottom: 20,
+                                }}
+                            />
+                            <div
+                                style={{
+                                    fontFamily: "'DM Serif Display', serif",
+                                    fontSize: 20,
+                                    color: "#e8e3dc",
+                                    marginBottom: 12,
+                                    lineHeight: 1.2,
+                                }}
+                            >
+                                {step.label}
+                            </div>
+                            <p
+                                style={{
+                                    fontSize: 13,
+                                    color: "#555",
+                                    lineHeight: 1.72,
+                                }}
+                            >
+                                {step.desc}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <section
+                style={{
+                    padding: "0 40px 112px",
+                    maxWidth: 1100,
+                    margin: "0 auto",
+                }}
+            >
+                <div
+                    style={{
+                        border: "1px solid #161616",
+                        borderRadius: 16,
+                        overflow: "hidden",
+                        background: "#0d0d0d",
+                    }}
+                >
+                    <div
+                        style={{
+                            padding: "14px 20px",
+                            borderBottom: "1px solid #161616",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                        }}
+                    >
+                        {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+                            <div
+                                key={c}
+                                style={{
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: "50%",
+                                    background: c,
+                                    opacity: 0.7,
+                                }}
+                            />
+                        ))}
+                        <div
+                            style={{
+                                flex: 1,
+                                margin: "0 16px",
+                                background: "#161616",
+                                borderRadius: 6,
+                                padding: "5px 14px",
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                color: "#444",
+                            }}
+                        >
+                            yourname.vercel.app
+                        </div>
+                    </div>
+
+                    <div
+                        style={{
+                            padding: "48px 40px",
+                            background: "#0a0a0a",
+                            minHeight: 320,
+                            position: "relative",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <div
+                            style={{
+                                position: "absolute",
+                                inset: 0,
+                                background:
+                                    "repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,0.015) 39px,rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,0.015) 39px,rgba(255,255,255,0.015) 40px)",
+                                pointerEvents: "none",
+                            }}
+                        />
+                        <p
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 10,
+                                letterSpacing: "0.2em",
+                                textTransform: "uppercase",
+                                color: "rgba(255,255,255,0.2)",
+                                marginBottom: 16,
+                            }}
+                        >
+                            Full-Stack Engineer
+                        </p>
+                        <div
+                            style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: "clamp(40px, 7vw, 88px)",
+                                fontWeight: 400,
+                                color: "#e8e3dc",
+                                lineHeight: 0.9,
+                                letterSpacing: "-0.02em",
+                                marginBottom: 32,
+                            }}
+                        >
+                            ALEX
+                            <br />
+                            <span
+                                style={{
+                                    paddingLeft: "clamp(20px, 3vw, 44px)",
+                                    color: "rgba(255,255,255,0.18)",
+                                }}
+                            >
+                                CHEN
+                            </span>
+                        </div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                            {["React · S", "TypeScript · A", "Node.js · A"].map(
+                                (tag) => (
+                                    <span
+                                        key={tag}
+                                        style={{
+                                            fontFamily: "'DM Mono', monospace",
+                                            fontSize: 10,
+                                            letterSpacing: "0.1em",
+                                            border: "1px solid #222",
+                                            borderRadius: 999,
+                                            padding: "5px 12px",
+                                            color: "#444",
+                                        }}
+                                    >
+                                        {tag}
+                                    </span>
+                                ),
+                            )}
+                        </div>
+                        <div
+                            style={{
+                                position: "absolute",
+                                right: 40,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                width: 220,
+                                background: "rgba(10,10,10,0.9)",
+                                border: "1px solid #222",
+                                borderRadius: 12,
+                                padding: 18,
+                                backdropFilter: "blur(12px)",
+                            }}
+                        >
+                            <p
+                                style={{
+                                    fontSize: 11,
+                                    color: "#555",
+                                    lineHeight: 1.65,
+                                    marginBottom: 14,
+                                }}
+                            >
+                                Builds fast, minimal software. Cares about the
+                                gap between design and engineering.
+                            </p>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: 20,
+                                    paddingBottom: 12,
+                                    borderBottom: "1px solid #1a1a1a",
+                                    marginBottom: 12,
+                                }}
+                            >
+                                {[
+                                    { l: "Projects", v: "12" },
+                                    { l: "Years", v: "3" },
+                                ].map(({ l, v }) => (
+                                    <div key={l}>
+                                        <div
+                                            style={{
+                                                fontFamily:
+                                                    "'DM Mono', monospace",
+                                                fontSize: 8,
+                                                letterSpacing: "0.14em",
+                                                textTransform: "uppercase",
+                                                color: "#444",
+                                                marginBottom: 3,
+                                            }}
+                                        >
+                                            {l}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontFamily:
+                                                    "'DM Serif Display', serif",
+                                                fontSize: 24,
+                                                color: "#e8e3dc",
+                                            }}
+                                        >
+                                            {v}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div
+                                style={{
+                                    fontFamily: "'DM Mono', monospace",
+                                    fontSize: 10,
+                                    color: "#333",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                View work
+                                <svg
+                                    viewBox="0 0 12 12"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    width={10}
+                                    height={10}
+                                >
+                                    <path d="M2 6h8M6 2l4 4-4 4" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p
+                    style={{
+                        textAlign: "center",
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11,
+                        color: "#333",
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        marginTop: 20,
+                    }}
+                >
+                    Your generated portfolio - ready to ship
+                </p>
+            </section>
+
+            <section id="features" style={{ padding: "0 40px 112px" }}>
+                <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+                    <div ref={featuresRef} style={{ marginBottom: 56 }}>
+                        <p
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.22em",
+                                textTransform: "uppercase",
+                                color: "#444",
+                                marginBottom: 16,
+                            }}
+                        >
+                            Features
+                        </p>
+                        <h2
+                            style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: "clamp(34px, 4.5vw, 56px)",
+                                color: "#e8e3dc",
+                                lineHeight: 1,
+                                letterSpacing: "-0.02em",
+                            }}
+                        >
+                            Everything you need.
+                            <br />
+                            <span style={{ color: "#333" }}>
+                                Nothing you don't.
+                            </span>
+                        </h2>
+                    </div>
+
+                    <div
+                        className="features-grid"
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, 1fr)",
+                            gap: 1,
+                        }}
+                    >
+                        {FEATURES.map((f, i) => (
+                            <div
+                                key={f.title}
+                                className={`feature-card ${featuresVisible ? "visible" : ""}`}
+                                style={{
+                                    transitionDelay: `${i * 0.08}s`,
+                                    padding: "32px 28px",
+                                    background: "#0d0d0d",
+                                    border: "1px solid #161616",
+                                    borderRadius: 4,
+                                    transition: "background 0.2s",
+                                    cursor: "default",
+                                }}
+                                onMouseEnter={(e) =>
+                                    (e.currentTarget.style.background = "#111")
+                                }
+                                onMouseLeave={(e) =>
+                                    (e.currentTarget.style.background =
+                                        "#0d0d0d")
+                                }
+                            >
+                                <div
+                                    style={{
+                                        fontSize: 22,
+                                        color: "#333",
+                                        marginBottom: 16,
+                                        fontFamily: "monospace",
+                                    }}
+                                >
+                                    {f.icon}
+                                </div>
+                                <div
+                                    style={{
+                                        fontFamily: "'DM Serif Display', serif",
+                                        fontSize: 18,
+                                        color: "#e8e3dc",
+                                        marginBottom: 10,
+                                    }}
+                                >
+                                    {f.title}
+                                </div>
+                                <p
+                                    style={{
+                                        fontSize: 13,
+                                        color: "#555",
+                                        lineHeight: 1.72,
+                                    }}
+                                >
+                                    {f.desc}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <section style={{ padding: "0 40px 120px" }}>
+                <div
+                    ref={ctaRef}
+                    className={`cta-section ${ctaVisible ? "visible" : ""}`}
+                    style={{
+                        maxWidth: 1100,
+                        margin: "0 auto",
+                        background: "#0d0d0d",
+                        border: "1px solid #161616",
+                        borderRadius: 20,
+                        padding: "80px 60px",
+                        textAlign: "center",
+                        position: "relative",
+                        overflow: "hidden",
+                    }}
+                >
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%,-50%)",
+                            width: 500,
+                            height: 300,
+                            background:
+                                "radial-gradient(ellipse, rgba(232,227,220,0.03) 0%, transparent 70%)",
+                            pointerEvents: "none",
+                        }}
+                    />
+
+                    <p
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            letterSpacing: "0.22em",
+                            textTransform: "uppercase",
+                            color: "#444",
+                            marginBottom: 20,
+                        }}
+                    >
+                        Free forever
+                    </p>
+                    <h2
+                        style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: "clamp(36px, 5vw, 64px)",
+                            color: "#e8e3dc",
+                            lineHeight: 1,
+                            letterSpacing: "-0.02em",
+                            marginBottom: 20,
+                        }}
+                    >
+                        Ship your portfolio
+                        <br />
+                        today.
+                    </h2>
+                    <p
+                        style={{
+                            fontSize: 15,
+                            color: "#555",
+                            maxWidth: 400,
+                            margin: "0 auto 40px",
+                            lineHeight: 1.72,
+                        }}
+                    >
+                        No account needed. No credit card. Just your GitHub
+                        username and two minutes.
+                    </p>
+                    <Link
+                        href="/generate"
+                        className="btn-primary"
+                        style={{ fontSize: 15, padding: "16px 36px" }}
+                    >
+                        Generate My Portfolio
+                        <svg
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            width={14}
+                            height={14}
+                        >
+                            <path d="M2 7h10M7 2l5 5-5 5" />
+                        </svg>
+                    </Link>
+                </div>
+            </section>
+
+            <footer
+                style={{ borderTop: "1px solid #111", padding: "32px 40px" }}
+            >
+                <div
+                    className="footer-inner"
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 16,
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: "50%",
+                                background: "#e8e3dc",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <svg
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                stroke="#080808"
+                                strokeWidth="2.4"
+                                width={9}
+                                height={9}
+                            >
+                                <circle cx="7" cy="7" r="3.5" />
+                                <circle
+                                    cx="7"
+                                    cy="7"
+                                    r="1"
+                                    fill="#080808"
+                                    stroke="none"
+                                />
+                            </svg>
+                        </div>
+                        <span
+                            style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: 15,
+                                color: "#e8e3dc",
+                            }}
+                        >
+                            mkfolio
+                        </span>
+                    </div>
+                    <p
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            color: "#333",
+                            letterSpacing: "0.1em",
+                        }}
+                    >
+                        © {new Date().getFullYear()} - Free & Open Source
+                    </p>
+                    <div style={{ display: "flex", gap: 24 }}>
+                        <a
+                            href="https://github.com"
+                            className="nav-link"
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.1em",
+                            }}
+                        >
+                            GitHub
+                        </a>
+                        <Link
+                            href="/generate"
+                            className="nav-link"
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.1em",
+                            }}
+                        >
+                            Generate
+                        </Link>
+                    </div>
+                </div>
+            </footer>
         </>
     );
 }
