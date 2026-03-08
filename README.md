@@ -1,10 +1,10 @@
-# mkfolio
+# makemyfolio
 
 An AI-powered portfolio generator. Paste your GitHub username, pick your best projects, fill in your details - Gemini rewrites everything into sharp, minimal copy. Download a single self-contained HTML file and host it anywhere.
 
-**[Live Demo](https://mkfolio.vercel.app)** · **[Generate yours](https://mkfolio.vercel.app/generate)**
+**[Live Demo](https://makemyfolio.vercel.app)** · **[Generate yours](https://makemyfolio.vercel.app/generate)**
 
-![mkfolio preview](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&q=80&auto=format)
+![makemyfolio preview](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&q=80&auto=format)
 
 ---
 
@@ -35,8 +35,8 @@ An AI-powered portfolio generator. Paste your GitHub username, pick your best pr
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/yourusername/mkfolio.git
-cd mkfolio
+git clone https://github.com/yourusername/makemyfolio.git
+cd makemyfolio
 ```
 
 ### 2. Install dependencies
@@ -123,8 +123,8 @@ The downloaded `portfolio.html` is:
 - Responsive across all screen sizes
 - Dark by default with grain texture and scroll-reveal animations
 - Sections: Hero, Projects, Skills (with S/A/B tiers), Experience
-- Custom favicon support or default mkfolio favicon
-- "Built with mkfolio" credit in the footer
+- Custom favicon support or default makemyfolio favicon
+- "Built with makemyfolio" credit in the footer
 
 ---
 

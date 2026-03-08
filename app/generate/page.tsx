@@ -2,13 +2,14 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useState, useRef } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import {
-    downloadHTML,
-    generatePortfolioHTML,
-    PortfolioData,
-} from "../lib/export";
+import { useSession, signOut } from "next-auth/react";
+import { downloadHTML, PortfolioData } from "../lib/export";
+import { TEMPLATES } from "../templates";
+import { generatePDF } from "../lib/pdf";
 
 interface GithubRepo {
     id: number;
@@ -53,7 +54,7 @@ export default function GeneratePage() {
     const [step, setStep] = useState<Step>(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [username, setUsername] = useState("");
+    const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
     const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
     const [repos, setRepos] = useState<GithubRepo[]>([]);
     const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set());
@@ -72,6 +73,7 @@ export default function GeneratePage() {
         { title: "", company: "", location: "", type: "Full-Time", period: "" },
     ]);
     const [generated, setGenerated] = useState<PortfolioData | null>(null);
+    const [remaining, setRemaining] = useState<number | null>(null);
 
     const handleFavicon = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -84,30 +86,11 @@ export default function GeneratePage() {
         };
         reader.readAsDataURL(file);
     };
+
     const removeFavicon = () => {
         setFaviconDataUrl("");
         setFaviconPreview("");
         if (faviconRef.current) faviconRef.current.value = "";
-    };
-
-    const fetchGitHub = async () => {
-        if (!username.trim()) return;
-        setLoading(true);
-        setError("");
-        try {
-            const res = await fetch(`/api/github?username=${username.trim()}`);
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Not found");
-            setGithubUser(data.user);
-            setRepos(data.repos);
-            if (data.user.name) setName(data.user.name);
-            if (data.user.bio) setBio(data.user.bio);
-            setStep(2);
-        } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : "GitHub user not found");
-        } finally {
-            setLoading(false);
-        }
     };
 
     const toggleRepo = (id: number) =>
@@ -170,6 +153,7 @@ export default function GeneratePage() {
                     skills,
                     projects: selectedProjects,
                     experience,
+                    templateId,
                 }),
             });
             const data = await res.json();
@@ -195,6 +179,9 @@ export default function GeneratePage() {
                 skills: data.skills,
                 experience,
             });
+            if (data.remaining !== undefined) {
+                setRemaining(data.remaining);
+            }
             setStep(4);
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : "Something went wrong");
@@ -205,13 +192,42 @@ export default function GeneratePage() {
 
     const handleDownload = () => {
         if (!generated) return;
+        const template =
+            TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
+        const html = template.generate(generated);
         downloadHTML(
-            generatePortfolioHTML(generated),
-            `${generated.name.toLowerCase().replace(/\s+/g, "-")}-portfolio.html`,
+            html,
+            `${generated.name
+                .toLowerCase()
+                .replace(/\s+/g, "-")}-portfolio.html`,
         );
     };
 
-    const STEPS = ["GitHub", "Projects", "Details", "Download"];
+    const STEPS = ["Template", "Projects", "Details", "Download"];
+    const selectedTemplate =
+        TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
+    const sessionResult = useSession();
+    const session = sessionResult?.data ?? null;
+
+    useEffect(() => {
+        if (!session?.user) return;
+        const login = session.user.login ?? session.user.name;
+        if (!login) return;
+
+        setLoading(true);
+        fetch(`/api/github?username=${login}`)
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.repos) {
+                    setRepos(data.repos);
+                    setGithubUser(data.user);
+                    if (data.user?.name) setName(data.user.name);
+                    if (data.user?.bio) setBio(data.user.bio);
+                }
+            })
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, [session]);
 
     return (
         <>
@@ -250,6 +266,19 @@ export default function GeneratePage() {
         .fd:hover{border-color:#3a3a3a;background:#111}
         input[type=range]{accent-color:#e8e3dc}
         input[type=file]{display:none}
+        .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:28px}
+        .tpl-card{border:1.5px solid #1c1c1c;border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .18s;background:#0d0d0d;position:relative}
+        .tpl-card:hover{border-color:#3a3a3a;transform:translateY(-2px)}
+        .tpl-card.active{border-color:#e8e3dc}
+        .tpl-card.active .tpl-check{opacity:1;transform:scale(1)}
+        .tpl-thumb{width:100%;aspect-ratio:16/10;display:block;overflow:hidden;background:#080808;line-height:0}
+        .tpl-thumb svg{width:100%;height:100%;display:block}
+        .tpl-info{padding:12px 14px 14px}
+        .tpl-name{font-family:'DM Serif Display',serif;font-size:15px;color:#e8e3dc;margin-bottom:4px}
+        .tpl-desc{font-size:11px;color:#555;line-height:1.55;margin-bottom:8px}
+        .tpl-tags{display:flex;gap:4px;flex-wrap:wrap}
+        .tpl-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;color:#444;border:1px solid #1c1c1c;border-radius:999px;padding:2px 8px}
+        .tpl-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#e8e3dc;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0.7);transition:opacity .2s,transform .2s}
         @media(max-width:768px){
           .nav-steps{display:none!important}
           .two-col{grid-template-columns:1fr!important}
@@ -257,11 +286,13 @@ export default function GeneratePage() {
           .si{flex-wrap:wrap}
           .si .gs{flex:1!important;min-width:0}
           .si .yrs{width:100%!important}
+          .tpl-grid{grid-template-columns:1fr 1fr!important}
         }
         @media(max-width:480px){
           .three-col{grid-template-columns:1fr!important}
           .brow{flex-direction:column}
           .bp,.bg{width:100%;justify-content:center}
+          .tpl-grid{grid-template-columns:1fr!important}
         }
       `}</style>
 
@@ -294,35 +325,6 @@ export default function GeneratePage() {
                         flexShrink: 0,
                     }}
                 >
-                    <div
-                        style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: "50%",
-                            background: "#e8e3dc",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 14 14"
-                            fill="none"
-                            stroke="#080808"
-                            strokeWidth="2.4"
-                            width={12}
-                            height={12}
-                        >
-                            <circle cx="7" cy="7" r="3.5" />
-                            <circle
-                                cx="7"
-                                cy="7"
-                                r="1"
-                                fill="#080808"
-                                stroke="none"
-                            />
-                        </svg>
-                    </div>
                     <span
                         style={{
                             fontFamily: "'DM Serif Display', serif",
@@ -331,7 +333,7 @@ export default function GeneratePage() {
                             letterSpacing: "-0.01em",
                         }}
                     >
-                        mkfolio
+                        makemyfolio
                     </span>
                 </Link>
 
@@ -369,7 +371,11 @@ export default function GeneratePage() {
                                                 : active
                                                   ? "rgba(232,227,220,0.15)"
                                                   : "transparent",
-                                            border: `1px solid ${done || active ? "#e8e3dc" : "#2a2a2a"}`,
+                                            border: `1px solid ${
+                                                done || active
+                                                    ? "#e8e3dc"
+                                                    : "#2a2a2a"
+                                            }`,
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -419,10 +425,10 @@ export default function GeneratePage() {
                                         {label}
                                     </span>
                                 </div>
-                                {i < 3 && (
+                                {i < STEPS.length - 1 && (
                                     <div
                                         style={{
-                                            width: 16,
+                                            width: 14,
                                             height: 1,
                                             background: done
                                                 ? "#2a2a2a"
@@ -436,17 +442,52 @@ export default function GeneratePage() {
                     })}
                 </div>
 
-                <span
+                <div
                     style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 11,
-                        color: "#333",
-                        letterSpacing: "0.1em",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
                         flexShrink: 0,
                     }}
                 >
-                    {step} / 4
-                </span>
+                    <span
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            color: "#333",
+                            letterSpacing: "0.1em",
+                        }}
+                    >
+                        {step} / 4
+                    </span>
+                    {session?.user && (
+                        <button
+                            onClick={() => signOut({ callbackUrl: "/" })}
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 10,
+                                color: "#444",
+                                background: "none",
+                                border: "1px solid #1c1c1c",
+                                borderRadius: 999,
+                                padding: "5px 12px",
+                                cursor: "pointer",
+                                letterSpacing: "0.08em",
+                                transition: "color .2s, border-color .2s",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = "#e8e3dc";
+                                e.currentTarget.style.borderColor = "#3a3a3a";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = "#444";
+                                e.currentTarget.style.borderColor = "#1c1c1c";
+                            }}
+                        >
+                            Sign out
+                        </button>
+                    )}
+                </div>
             </nav>
 
             <main
@@ -458,7 +499,7 @@ export default function GeneratePage() {
             >
                 <div
                     style={{
-                        maxWidth: 640,
+                        maxWidth: 700,
                         margin: "0 auto",
                         padding: "40px 20px 0",
                         position: "relative",
@@ -496,10 +537,11 @@ export default function GeneratePage() {
                         </div>
                     )}
 
+                    {/* Step 1 — Template */}
                     {step === 1 && (
                         <div className="fade-up">
                             <p style={{ ...LBL, marginBottom: 16 }}>
-                                Step 01 - Connect
+                                Step 01 — Template
                             </p>
                             <h1
                                 style={{
@@ -511,9 +553,9 @@ export default function GeneratePage() {
                                     marginBottom: 20,
                                 }}
                             >
-                                Enter your
+                                Pick your
                                 <br />
-                                GitHub username.
+                                template.
                             </h1>
                             <p
                                 style={{
@@ -524,27 +566,123 @@ export default function GeneratePage() {
                                     maxWidth: 460,
                                 }}
                             >
-                                We'll fetch your repos, stars, and languages
-                                automatically. No manual entry.
+                                Choose a style for your portfolio. Every
+                                template uses the same AI-generated content —
+                                just a different look.
                             </p>
-                            <label style={LBL}>GitHub Username</label>
-                            <input
-                                className="gi"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                onKeyDown={(e) =>
-                                    e.key === "Enter" && fetchGitHub()
-                                }
-                                placeholder="e.g. torvalds"
-                                autoFocus
-                                style={{ fontSize: 18, padding: "16px 20px" }}
-                            />
+
+                            <div className="tpl-grid">
+                                {TEMPLATES.map((tpl) => (
+                                    <div
+                                        key={tpl.id}
+                                        className={`tpl-card${
+                                            templateId === tpl.id
+                                                ? " active"
+                                                : ""
+                                        }`}
+                                        onClick={() => setTemplateId(tpl.id)}
+                                    >
+                                        <div
+                                            className="tpl-thumb"
+                                            dangerouslySetInnerHTML={{
+                                                __html: tpl.preview,
+                                            }}
+                                        />
+                                        <div className="tpl-info">
+                                            <div className="tpl-name">
+                                                {tpl.name}
+                                            </div>
+                                            <div className="tpl-desc">
+                                                {tpl.description}
+                                            </div>
+                                            <div className="tpl-tags">
+                                                {tpl.tags.map((tag) => (
+                                                    <span
+                                                        key={tag}
+                                                        className="tpl-tag"
+                                                    >
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="tpl-check">
+                                            <svg
+                                                viewBox="0 0 10 10"
+                                                fill="none"
+                                                stroke="#080808"
+                                                strokeWidth="2.5"
+                                                width={9}
+                                                height={9}
+                                            >
+                                                <path d="M1.5 5l2.5 2.5 4.5-4.5" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div
+                                style={{
+                                    background: "#0d0d0d",
+                                    border: "1px solid #1c1c1c",
+                                    borderRadius: 12,
+                                    padding: "14px 18px",
+                                    marginBottom: 28,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: 7,
+                                        height: 7,
+                                        borderRadius: "50%",
+                                        background: "#e8e3dc",
+                                        flexShrink: 0,
+                                    }}
+                                />
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Mono',monospace",
+                                        fontSize: 11,
+                                        color: "#e8e3dc",
+                                        letterSpacing: "0.08em",
+                                    }}
+                                >
+                                    {selectedTemplate.name}
+                                </span>
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Mono',monospace",
+                                        fontSize: 11,
+                                        color: "#2a2a2a",
+                                        letterSpacing: "0.08em",
+                                    }}
+                                >
+                                    selected
+                                </span>
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Mono',monospace",
+                                        fontSize: 10,
+                                        color: "#333",
+                                        marginLeft: "auto",
+                                    }}
+                                >
+                                    {selectedTemplate.tags.join(" · ")}
+                                </span>
+                            </div>
+
                             <button
                                 className="bp"
-                                onClick={fetchGitHub}
-                                disabled={loading || !username.trim()}
+                                onClick={() => setStep(2)}
+                                disabled={loading}
                             >
-                                {loading ? "Fetching repos..." : "Fetch Repos"}
+                                {loading
+                                    ? "Loading your repos..."
+                                    : `Use ${selectedTemplate.name}`}
                                 {!loading && (
                                     <svg
                                         viewBox="0 0 14 14"
@@ -561,10 +699,11 @@ export default function GeneratePage() {
                         </div>
                     )}
 
+                    {/* Step 2 — Projects */}
                     {step === 2 && (
                         <div className="fade-up">
                             <p style={{ ...LBL, marginBottom: 16 }}>
-                                Step 02 - Projects
+                                Step 02 — Projects
                             </p>
                             <h1
                                 style={{
@@ -619,7 +758,11 @@ export default function GeneratePage() {
                                                     width: 18,
                                                     height: 18,
                                                     borderRadius: 4,
-                                                    border: `1.5px solid ${sel ? "#e8e3dc" : "#2a2a2a"}`,
+                                                    border: `1.5px solid ${
+                                                        sel
+                                                            ? "#e8e3dc"
+                                                            : "#2a2a2a"
+                                                    }`,
                                                     background: sel
                                                         ? "#e8e3dc"
                                                         : "transparent",
@@ -724,7 +867,7 @@ export default function GeneratePage() {
                                     onClick={() => setStep(3)}
                                     disabled={selectedRepos.size === 0}
                                 >
-                                    Continue - {selectedRepos.size} selected
+                                    Continue — {selectedRepos.size} selected
                                     <svg
                                         viewBox="0 0 14 14"
                                         fill="none"
@@ -740,10 +883,11 @@ export default function GeneratePage() {
                         </div>
                     )}
 
+                    {/* Step 3 — Details */}
                     {step === 3 && (
                         <div className="fade-up">
                             <p style={{ ...LBL, marginBottom: 16 }}>
-                                Step 03 - Details
+                                Step 03 — Details
                             </p>
                             <h1
                                 style={{
@@ -767,7 +911,7 @@ export default function GeneratePage() {
                                     marginBottom: 40,
                                 }}
                             >
-                                Don't overthink it - we will sharpen everything.
+                                Don't overthink it — AI will sharpen everything.
                                 Just give us the raw material.
                             </p>
 
@@ -787,7 +931,7 @@ export default function GeneratePage() {
                                         onChange={(e) =>
                                             setName(e.target.value)
                                         }
-                                        placeholder="Alex Chen"
+                                        placeholder="Your Name"
                                     />
                                 </div>
                                 <div>
@@ -799,11 +943,10 @@ export default function GeneratePage() {
                                         onChange={(e) =>
                                             setEmail(e.target.value)
                                         }
-                                        placeholder="alex@example.com"
+                                        placeholder="you@example.com"
                                     />
                                 </div>
                             </div>
-
                             <label style={LBL}>Job Title</label>
                             <input
                                 className="gi"
@@ -811,13 +954,12 @@ export default function GeneratePage() {
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Frontend Developer"
                             />
-
                             <label style={LBL}>Bio</label>
                             <textarea
                                 className="gt"
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
-                                placeholder="Write anything - even rough copy works. We will rewrite it."
+                                placeholder="Write anything - even rough copy works. AI will rewrite it."
                             />
 
                             <div style={{ marginBottom: 24 }}>
@@ -832,7 +974,7 @@ export default function GeneratePage() {
                                             fontSize: 11,
                                         }}
                                     >
-                                        - optional
+                                        — optional
                                     </span>
                                 </label>
                                 {faviconPreview ? (
@@ -956,7 +1098,7 @@ export default function GeneratePage() {
                                         marginTop: 8,
                                     }}
                                 >
-                                    Leave empty to use the default mkfolio
+                                    Leave empty to use the default makemyfolio
                                     favicon.
                                 </p>
                             </div>
@@ -1223,7 +1365,7 @@ export default function GeneratePage() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                placeholder="Acme Corp"
+                                                placeholder="ABC Corp"
                                             />
                                         </div>
                                         <div
@@ -1319,14 +1461,30 @@ export default function GeneratePage() {
                                         </svg>
                                     )}
                                 </button>
+                                {remaining !== null && (
+                                    <p
+                                        style={{
+                                            fontFamily: "'DM Mono',monospace",
+                                            fontSize: 10,
+                                            color: "#333",
+                                            marginTop: 12,
+                                            letterSpacing: "0.08em",
+                                        }}
+                                    >
+                                        {remaining} generation
+                                        {remaining !== 1 ? "s" : ""} remaining
+                                        today
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
 
+                    {/* Step 4 — Download */}
                     {step === 4 && generated && (
                         <div className="fade-up">
                             <p style={{ ...LBL, marginBottom: 16 }}>
-                                Step 04 - Done
+                                Step 04 — Done
                             </p>
                             <h1
                                 style={{
@@ -1347,12 +1505,78 @@ export default function GeneratePage() {
                                     fontSize: 15,
                                     color: "#555",
                                     lineHeight: 1.75,
-                                    marginBottom: 40,
+                                    marginBottom: 32,
                                 }}
                             >
-                                We have rewritten your content. Download and
-                                host it anywhere in minutes.
+                                AI has rewritten your content into the{" "}
+                                <strong
+                                    style={{
+                                        color: "#e8e3dc",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {selectedTemplate.name}
+                                </strong>{" "}
+                                template. Download and host it anywhere in
+                                minutes.
                             </p>
+
+                            <div
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    border: "1px solid #1c1c1c",
+                                    borderRadius: 999,
+                                    padding: "8px 16px",
+                                    marginBottom: 24,
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: 6,
+                                        height: 6,
+                                        borderRadius: "50%",
+                                        background: "#e8e3dc",
+                                    }}
+                                />
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Mono',monospace",
+                                        fontSize: 10,
+                                        color: "#555",
+                                        letterSpacing: "0.1em",
+                                        textTransform: "uppercase",
+                                    }}
+                                >
+                                    Template
+                                </span>
+                                <span
+                                    style={{
+                                        fontFamily: "'DM Serif Display',serif",
+                                        fontSize: 14,
+                                        color: "#e8e3dc",
+                                    }}
+                                >
+                                    {selectedTemplate.name}
+                                </span>
+                                {selectedTemplate.tags.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        style={{
+                                            fontFamily: "'DM Mono',monospace",
+                                            fontSize: 9,
+                                            color: "#333",
+                                            letterSpacing: "0.08em",
+                                            border: "1px solid #1c1c1c",
+                                            borderRadius: 999,
+                                            padding: "2px 8px",
+                                        }}
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
 
                             <div
                                 style={{
@@ -1419,105 +1643,16 @@ export default function GeneratePage() {
                                 </div>
                                 <div
                                     style={{
-                                        padding: "28px 24px",
-                                        background: "#080808",
-                                        position: "relative",
+                                        lineHeight: 0,
                                         overflow: "hidden",
                                     }}
-                                >
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            inset: 0,
-                                            background:
-                                                "repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,0.01) 39px,rgba(255,255,255,0.01) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,0.01) 39px,rgba(255,255,255,0.01) 40px)",
-                                            pointerEvents: "none",
-                                        }}
-                                    />
-                                    <p
-                                        style={{
-                                            fontFamily: "'DM Mono',monospace",
-                                            fontSize: 9,
-                                            letterSpacing: "0.2em",
-                                            textTransform: "uppercase",
-                                            color: "rgba(255,255,255,0.2)",
-                                            marginBottom: 10,
-                                        }}
-                                    >
-                                        {generated.title}
-                                    </p>
-                                    <div
-                                        style={{
-                                            fontFamily:
-                                                "'DM Serif Display',serif",
-                                            fontSize: "clamp(28px,6vw,52px)",
-                                            color: "#e8e3dc",
-                                            lineHeight: 0.9,
-                                            letterSpacing: "-0.02em",
-                                            marginBottom: 16,
-                                        }}
-                                    >
-                                        {generated.name
-                                            .split(" ")[0]
-                                            .toUpperCase()}
-                                        {generated.name.split(" ")[1] && (
-                                            <>
-                                                <br />
-                                                <span
-                                                    style={{
-                                                        paddingLeft:
-                                                            "clamp(12px,2.5vw,28px)",
-                                                        color: "rgba(255,255,255,0.18)",
-                                                    }}
-                                                >
-                                                    {generated.name
-                                                        .split(" ")
-                                                        .slice(1)
-                                                        .join(" ")
-                                                        .toUpperCase()}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <p
-                                        style={{
-                                            fontSize: 12,
-                                            color: "#555",
-                                            lineHeight: 1.65,
-                                            maxWidth: 340,
-                                            marginBottom: 16,
-                                        }}
-                                    >
-                                        {generated.bio}
-                                    </p>
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            gap: 6,
-                                            flexWrap: "wrap",
-                                        }}
-                                    >
-                                        {generated.skills
-                                            .slice(0, 4)
-                                            .map((s) => (
-                                                <span
-                                                    key={s.name}
-                                                    style={{
-                                                        fontFamily:
-                                                            "'DM Mono',monospace",
-                                                        fontSize: 9,
-                                                        letterSpacing: "0.1em",
-                                                        border: "1px solid #1c1c1c",
-                                                        borderRadius: 999,
-                                                        padding: "4px 10px",
-                                                        color: "#444",
-                                                    }}
-                                                >
-                                                    {s.name} · {s.tier}
-                                                </span>
-                                            ))}
-                                    </div>
-                                </div>
+                                    dangerouslySetInnerHTML={{
+                                        __html: selectedTemplate.preview.replace(
+                                            "<svg ",
+                                            '<svg style="width:100%;height:auto;display:block" ',
+                                        ),
+                                    }}
+                                />
                             </div>
 
                             <div
@@ -1568,12 +1703,29 @@ export default function GeneratePage() {
                                     onClick={() => {
                                         setStep(1);
                                         setGenerated(null);
-                                        setUsername("");
                                         setSelectedRepos(new Set());
                                         removeFavicon();
                                     }}
                                 >
                                     Generate another
+                                </button>
+                                <button
+                                    className="bg"
+                                    onClick={() =>
+                                        generated && generatePDF(generated)
+                                    }
+                                >
+                                    Download resume.pdf
+                                    <svg
+                                        viewBox="0 0 14 14"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.2"
+                                        width={13}
+                                        height={13}
+                                    >
+                                        <path d="M7 1v8M3 6l4 4 4-4M1 12h12" />
+                                    </svg>
                                 </button>
                             </div>
                         </div>

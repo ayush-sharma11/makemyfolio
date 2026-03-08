@@ -8,6 +8,8 @@ import {
 } from "next/font/google";
 import "./globals.css";
 
+import { SessionProvider } from "next-auth/react";
+
 const dmSerif = DM_Serif_Display({
     subsets: ["latin"],
     weight: ["400"],
@@ -35,7 +37,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "mkfolio",
+    title: "makemyfolio",
     description: "Generate portfolio powered by AI!",
 };
 
@@ -47,7 +49,9 @@ export default function RootLayout({
             lang="en"
             className={`${dmSerif.variable} ${dmMono.variable} ${outfit.variable} ${syne.variable} ${inter.variable}`}
         >
-            <body className="antialiased">{children}</body>
+            <body className="antialiased">
+                <SessionProvider>{children}</SessionProvider>
+            </body>
         </html>
     );
 }

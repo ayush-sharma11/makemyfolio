@@ -3,6 +3,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { TEMPLATES } from "../app/templates";
 
 const STEPS = [
     {
@@ -72,7 +74,7 @@ function useInView(ref: React.RefObject<HTMLElement | null>, threshold = 0.15) {
                     obs.disconnect();
                 }
             },
-            { threshold },
+            { threshold }
         );
         obs.observe(el);
         return () => obs.disconnect();
@@ -80,153 +82,33 @@ function useInView(ref: React.RefObject<HTMLElement | null>, threshold = 0.15) {
     return visible;
 }
 
-export default function LandingPage() {
-    const heroRef = useRef<HTMLDivElement>(null);
-    const stepsRef = useRef<HTMLDivElement>(null);
-    const featuresRef = useRef<HTMLDivElement>(null);
-    const ctaRef = useRef<HTMLDivElement>(null);
-
-    const stepsVisible = useInView(stepsRef);
-    const featuresVisible = useInView(featuresRef);
-    const ctaVisible = useInView(ctaRef);
-
-    const tickerItems = [
-        "GitHub Import",
-        "AI Rewriting",
-        "Dark Template",
-        "HTML Export",
-        "Free Forever",
-    ];
+function LoggedInPage({
+    session,
+}: {
+    session: { user: { name?: string | null; login?: string } };
+}) {
+    const login =
+        (session.user as { login?: string }).login ??
+        session.user.name ??
+        "there";
+    const greeting = () => {
+        const h = new Date().getHours();
+        if (h < 12) return "Good morning";
+        if (h < 17) return "Good afternoon";
+        return "Good evening";
+    };
 
     return (
         <>
             <style>{`
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { background: #080808; color: #e8e3dc; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
-
-        ::selection { background: #e8e3dc; color: #080808; }
-
-        .grain {
-          position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0.032;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(32px); }
-          to { opacity: 1; transform: none; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideLeft {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        @keyframes tickIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: none; }
-        }
-
-        .hero-eyebrow { animation: fadeUp 0.7s 0.1s both; }
-        .hero-title { animation: fadeUp 0.8s 0.2s both; }
-        .hero-sub { animation: fadeUp 0.7s 0.38s both; }
-        .hero-cta { animation: fadeUp 0.7s 0.5s both; }
-        .hero-badge { animation: fadeIn 0.6s 0.7s both; }
-
-        .step-card {
-          opacity: 0; transform: translateY(24px);
-          transition: opacity 0.6s, transform 0.6s;
-        }
-        .step-card.visible { opacity: 1; transform: none; }
-
-        .feature-card {
-          opacity: 0; transform: translateY(20px);
-          transition: opacity 0.5s, transform 0.5s;
-        }
-        .feature-card.visible { opacity: 1; transform: none; }
-
-        .cta-section {
-          opacity: 0; transform: translateY(28px);
-          transition: opacity 0.7s, transform 0.7s;
-        }
-        .cta-section.visible { opacity: 1; transform: none; }
-
-        .ticker-wrap {
-          overflow: hidden;
-          white-space: nowrap;
-          border-top: 1px solid #1c1c1c;
-          border-bottom: 1px solid #1c1c1c;
-          padding: 14px 0;
-          background: #0d0d0d;
-        }
-        .ticker-track {
-          display: inline-flex;
-          gap: 64px;
-          animation: slideLeft 18s linear infinite;
-        }
-        .ticker-item {
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #3a3a3a;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        }
-        .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: #3a3a3a; flex-shrink: 0; }
-
-        .btn-primary {
-          display: inline-flex; align-items: center; gap: 10px;
-          background: #e8e3dc; color: #080808;
-          border: none; border-radius: 999px;
-          padding: 14px 28px; font-size: 14px; font-weight: 600;
-          cursor: pointer; text-decoration: none;
-          font-family: 'Outfit', sans-serif;
-          transition: background 0.2s, transform 0.2s, gap 0.25s;
-        }
-        .btn-primary:hover { background: #fff; transform: translateY(-2px); gap: 16px; }
-
-        .btn-ghost {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: transparent; color: #666;
-          border: 1px solid #222; border-radius: 999px;
-          padding: 13px 24px; font-size: 13px;
-          cursor: pointer; text-decoration: none;
-          font-family: 'Outfit', sans-serif;
-          transition: border-color 0.2s, color 0.2s;
-        }
-        .btn-ghost:hover { border-color: #444; color: #e8e3dc; }
-
-        .nav-link {
-          color: #555; font-size: 13px; text-decoration: none;
-          transition: color 0.2s;
-        }
-        .nav-link:hover { color: #e8e3dc; }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-          .nav-links-desktop { display: none !important; }
-          .steps-grid { grid-template-columns: 1fr 1fr !important; }
-          .features-grid { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media (max-width: 640px) {
-          .nav-links-desktop { display: none !important; }
-          .steps-grid { grid-template-columns: 1fr !important; }
-          .features-grid { grid-template-columns: 1fr !important; }
-          .hero-badges { gap: 20px !important; }
-          .cta-inner { padding: 48px 24px !important; }
-          .mockup-card { display: none !important; }
-          .footer-inner { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; }
-        }
-        @media (max-width: 480px) {
-          .hero-cta-row { flex-direction: column !important; }
-          .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
-        }
-      `}</style>
-
+                @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
+                @keyframes pulse { 0%,100% { opacity:0.4 } 50% { opacity:1 } }
+                .grain { position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.032;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E") }
+                .fade-up { animation: fadeUp 0.5s both }
+                .tpl-preview-card { border:1.5px solid #1c1c1c; border-radius:14px; overflow:hidden; background:#0d0d0d; transition:border-color .2s, transform .2s; cursor:pointer; text-decoration:none; display:block }
+                .tpl-preview-card:hover { border-color:#3a3a3a; transform:translateY(-3px) }
+                @media(max-width:600px) { .tpl-grid-2 { grid-template-columns:1fr !important } }
+            `}</style>
             <div className="grain" />
 
             <nav
@@ -245,36 +127,434 @@ export default function LandingPage() {
                     backdropFilter: "blur(20px)",
                 }}
             >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div
+                <span
+                    style={{
+                        fontFamily: "'DM Serif Display', serif",
+                        fontSize: 18,
+                        color: "#e8e3dc",
+                        letterSpacing: "-0.01em",
+                    }}
+                >
+                    makemyfolio
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                    <Link
+                        href="/about"
                         style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: "50%",
-                            background: "#e8e3dc",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            color: "#555",
+                            textDecoration: "none",
+                            letterSpacing: "0.1em",
+                            transition: "color .2s",
+                        }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.color = "#e8e3dc")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.color = "#555")
+                        }
+                    >
+                        About
+                    </Link>
+                    <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 10,
+                            color: "#444",
+                            background: "none",
+                            border: "1px solid #1c1c1c",
+                            borderRadius: 999,
+                            padding: "8px 16px",
+                            cursor: "pointer",
+                            letterSpacing: "0.08em",
+                            transition: "color .2s, border-color .2s",
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "#e8e3dc";
+                            e.currentTarget.style.borderColor = "#3a3a3a";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "#444";
+                            e.currentTarget.style.borderColor = "#1c1c1c";
                         }}
                     >
-                        <svg
-                            viewBox="0 0 14 14"
-                            fill="none"
-                            stroke="#080808"
-                            strokeWidth="2.4"
-                            width={12}
-                            height={12}
+                        Sign out
+                    </button>
+                </div>
+            </nav>
+
+            <main
+                style={{
+                    minHeight: "100vh",
+                    paddingTop: 88,
+                    paddingBottom: 80,
+                }}
+            >
+                <div
+                    style={{
+                        maxWidth: 860,
+                        margin: "0 auto",
+                        padding: "48px 24px 0",
+                    }}
+                >
+                    {/* Greeting */}
+                    <div className="fade-up" style={{ marginBottom: 48 }}>
+                        <p
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.22em",
+                                textTransform: "uppercase",
+                                color: "#444",
+                                marginBottom: 14,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                            }}
                         >
-                            <circle cx="7" cy="7" r="3.5" />
-                            <circle
-                                cx="7"
-                                cy="7"
-                                r="1"
-                                fill="#080808"
-                                stroke="none"
+                            <span
+                                style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: "50%",
+                                    background: "#e8e3dc",
+                                    display: "inline-block",
+                                    animation: "pulse 2s ease-in-out infinite",
+                                }}
                             />
-                        </svg>
+                            {greeting()}, {login}
+                        </p>
+                        <h1
+                            style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: "clamp(40px, 8vw, 80px)",
+                                lineHeight: 0.95,
+                                letterSpacing: "-0.02em",
+                                color: "#e8e3dc",
+                                marginBottom: 20,
+                            }}
+                        >
+                            Pick a template,
+                            <br />
+                            <span style={{ color: "#333" }}>ship today.</span>
+                        </h1>
+                        <p
+                            style={{
+                                fontSize: 15,
+                                color: "#555",
+                                lineHeight: 1.75,
+                                maxWidth: 460,
+                            }}
+                        >
+                            Choose a template below and we'll pull your GitHub
+                            repos, rewrite your copy with AI, and hand you a
+                            single HTML file.
+                        </p>
                     </div>
+
+                    {/* Template previews */}
+                    <div
+                        className="fade-up"
+                        style={{ animationDelay: "0.1s", marginBottom: 48 }}
+                    >
+                        <p
+                            style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 11,
+                                letterSpacing: "0.22em",
+                                textTransform: "uppercase",
+                                color: "#444",
+                                marginBottom: 20,
+                            }}
+                        >
+                            {TEMPLATES.length} template
+                            {TEMPLATES.length !== 1 ? "s" : ""} available
+                        </p>
+                        <div
+                            className="tpl-grid-2"
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, 1fr)",
+                                gap: 12,
+                            }}
+                        >
+                            {TEMPLATES.map((tpl) => (
+                                <Link
+                                    key={tpl.id}
+                                    href="/generate"
+                                    className="tpl-preview-card"
+                                >
+                                    {/* Thumbnail */}
+                                    <div
+                                        style={{
+                                            width: "100%",
+                                            aspectRatio: "16/10",
+                                            overflow: "hidden",
+                                            background: "#080808",
+                                            lineHeight: 0,
+                                        }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: tpl.preview,
+                                        }}
+                                    />
+                                    {/* Info */}
+                                    <div
+                                        style={{
+                                            padding: "18px 20px 20px",
+                                            borderTop: "1px solid #161616",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    fontFamily:
+                                                        "'DM Serif Display', serif",
+                                                    fontSize: 18,
+                                                    color: "#e8e3dc",
+                                                }}
+                                            >
+                                                {tpl.name}
+                                            </span>
+                                            <svg
+                                                viewBox="0 0 14 14"
+                                                fill="none"
+                                                stroke="#444"
+                                                strokeWidth="2"
+                                                width={12}
+                                                height={12}
+                                            >
+                                                <path d="M2 7h10M7 2l5 5-5 5" />
+                                            </svg>
+                                        </div>
+                                        <p
+                                            style={{
+                                                fontSize: 12,
+                                                color: "#555",
+                                                lineHeight: 1.6,
+                                                marginBottom: 12,
+                                            }}
+                                        >
+                                            {tpl.description}
+                                        </p>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                gap: 6,
+                                                flexWrap: "wrap",
+                                            }}
+                                        >
+                                            {tpl.tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    style={{
+                                                        fontFamily:
+                                                            "'DM Mono', monospace",
+                                                        fontSize: 9,
+                                                        letterSpacing: "0.08em",
+                                                        color: "#444",
+                                                        border: "1px solid #1c1c1c",
+                                                        borderRadius: 999,
+                                                        padding: "2px 8px",
+                                                    }}
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Main CTA */}
+                    <div className="fade-up" style={{ animationDelay: "0.2s" }}>
+                        <Link
+                            href="/generate"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                background: "#e8e3dc",
+                                borderRadius: 14,
+                                padding: "24px 28px",
+                                textDecoration: "none",
+                                transition: "background .2s, transform .2s",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "#fff";
+                                e.currentTarget.style.transform =
+                                    "translateY(-2px)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "#e8e3dc";
+                                e.currentTarget.style.transform = "none";
+                            }}
+                        >
+                            <div>
+                                <div
+                                    style={{
+                                        fontFamily: "'DM Serif Display', serif",
+                                        fontSize: 22,
+                                        color: "#080808",
+                                        marginBottom: 3,
+                                    }}
+                                >
+                                    Start generating
+                                </div>
+                                <div
+                                    style={{
+                                        fontFamily: "'DM Mono', monospace",
+                                        fontSize: 11,
+                                        color: "rgba(8,8,8,0.4)",
+                                        letterSpacing: "0.08em",
+                                    }}
+                                >
+                                    GitHub repos → AI copy → downloadable HTML
+                                </div>
+                            </div>
+                            <svg
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                stroke="#080808"
+                                strokeWidth="2.2"
+                                width={20}
+                                height={20}
+                            >
+                                <path d="M2 7h10M7 2l5 5-5 5" />
+                            </svg>
+                        </Link>
+                    </div>
+                </div>
+            </main>
+
+            <footer
+                style={{ borderTop: "1px solid #111", padding: "32px 40px" }}
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        maxWidth: 860,
+                        margin: "0 auto",
+                    }}
+                >
+                    <span
+                        style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: 15,
+                            color: "#e8e3dc",
+                        }}
+                    >
+                        makemyfolio
+                    </span>
+                    <p
+                        style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 11,
+                            color: "#333",
+                            letterSpacing: "0.1em",
+                        }}
+                    >
+                        © {new Date().getFullYear()} makemyfolio
+                    </p>
+                </div>
+            </footer>
+        </>
+    );
+}
+
+export default function LandingPage() {
+    const { data: session } = useSession();
+
+    const stepsRef = useRef<HTMLDivElement>(null);
+    const featuresRef = useRef<HTMLDivElement>(null);
+    const ctaRef = useRef<HTMLDivElement>(null);
+
+    const stepsVisible = useInView(stepsRef);
+    const featuresVisible = useInView(featuresRef);
+    const ctaVisible = useInView(ctaRef);
+
+    const tickerItems = [
+        "GitHub Import",
+        "AI Rewriting",
+        "Professional Templates",
+        "HTML Export",
+    ];
+
+    if (session?.user) {
+        return (
+            <LoggedInPage
+                session={
+                    session as {
+                        user: { name?: string | null; login?: string };
+                    }
+                }
+            />
+        );
+    }
+
+    return (
+        <>
+            <style>{`
+                .grain{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.032;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
+                .nav-link{font-family:'DM Mono',monospace;font-size:11px;color:#555;text-decoration:none;letter-spacing:.1em;transition:color .2s}
+                .nav-link:hover{color:#e8e3dc}
+                .btn-primary{display:inline-flex;align-items:center;gap:8px;background:#e8e3dc;color:#080808;border:none;border-radius:999px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;font-family:'Outfit',sans-serif;transition:background .2s,transform .2s;white-space:nowrap}
+                .btn-primary:hover{background:#fff;transform:translateY(-1px)}
+                .btn-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:#555;border:1px solid #1c1c1c;border-radius:999px;padding:12px 24px;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;transition:border-color .2s,color .2s;text-decoration:none}
+                .btn-ghost:hover{border-color:#3a3a3a;color:#e8e3dc}
+                .ticker-wrap{overflow:hidden;border-top:1px solid #111;border-bottom:1px solid #111;padding:12px 0;background:#0a0a0a}
+                .ticker-track{display:flex;width:max-content;animation:ticker 18s linear infinite}
+                @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+                .ticker-item{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#333;white-space:nowrap;padding:0 32px}
+                .ticker-dot{display:inline-block;width:3px;height:3px;border-radius:50%;background:#2a2a2a;margin-left:32px;vertical-align:middle}
+                .step-card{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
+                .step-card.visible{opacity:1;transform:none}
+                .feature-card{opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s}
+                .feature-card.visible{opacity:1;transform:none}
+                .cta-section{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+                .cta-section.visible{opacity:1;transform:none}
+                @media(max-width:768px){.nav-links-desktop{display:none!important}.steps-grid{grid-template-columns:1fr 1fr!important}.features-grid{grid-template-columns:1fr 1fr!important}}
+                @media(max-width:480px){.steps-grid{grid-template-columns:1fr!important}.features-grid{grid-template-columns:1fr!important}.hero-cta-row{flex-direction:column}.hero-cta-row .btn-primary,.hero-cta-row .btn-ghost{width:100%;justify-content:center}.hero-badge{gap:16px!important}}
+            `}</style>
+
+            <div className="grain" />
+
+            <nav
+                style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 100,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "18px 24px",
+                    borderBottom: "1px solid #111",
+                    background: "rgba(8,8,8,0.88)",
+                    backdropFilter: "blur(20px)",
+                    gap: 16,
+                }}
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        flexShrink: 0,
+                    }}
+                >
                     <span
                         style={{
                             fontFamily: "'DM Serif Display', serif",
@@ -283,13 +563,18 @@ export default function LandingPage() {
                             letterSpacing: "-0.01em",
                         }}
                     >
-                        mkfolio
+                        makemyfolio
                     </span>
                 </div>
 
                 <div
                     className="nav-links-desktop"
-                    style={{ display: "flex", gap: 32 }}
+                    style={{
+                        display: "flex",
+                        gap: 32,
+                        flex: 1,
+                        justifyContent: "center",
+                    }}
                 >
                     <a href="#how" className="nav-link">
                         How it works
@@ -297,32 +582,33 @@ export default function LandingPage() {
                     <a href="#features" className="nav-link">
                         Features
                     </a>
-                    <a href="https://github.com" className="nav-link">
-                        GitHub
-                    </a>
+                    <Link href="/about" className="nav-link">
+                        About
+                    </Link>
                 </div>
 
-                <Link
-                    href="/generate"
-                    className="btn-primary"
-                    style={{ padding: "10px 20px", fontSize: 13 }}
-                >
-                    Generate Free
-                    <svg
-                        viewBox="0 0 14 14"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        width={12}
-                        height={12}
+                <div style={{ flexShrink: 0 }}>
+                    <Link
+                        href="/generate"
+                        className="btn-primary"
+                        style={{ padding: "10px 20px", fontSize: 13 }}
                     >
-                        <path d="M2 7h10M7 2l5 5-5 5" />
-                    </svg>
-                </Link>
+                        Make For Free
+                        <svg
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            width={12}
+                            height={12}
+                        >
+                            <path d="M2 7h10M7 2l5 5-5 5" />
+                        </svg>
+                    </Link>
+                </div>
             </nav>
 
             <section
-                ref={heroRef}
                 style={{
                     minHeight: "100vh",
                     display: "flex",
@@ -342,7 +628,6 @@ export default function LandingPage() {
                             "repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(255,255,255,0.013) 79px,rgba(255,255,255,0.013) 80px), repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(255,255,255,0.013) 79px,rgba(255,255,255,0.013) 80px)",
                     }}
                 />
-
                 <div
                     style={{
                         position: "absolute",
@@ -432,7 +717,7 @@ export default function LandingPage() {
                         }}
                     >
                         <Link href="/generate" className="btn-primary">
-                            Build My Portfolio
+                            Make My Portfolio
                             <svg
                                 viewBox="0 0 14 14"
                                 fill="none"
@@ -459,7 +744,7 @@ export default function LandingPage() {
                         }}
                     >
                         {[
-                            { val: "Free", label: "No credit card" },
+                            { val: "Free", label: "Free tier available" },
                             { val: "~2 min", label: "To generate" },
                             { val: "1 file", label: "Self-contained HTML" },
                         ].map(({ val, label }) => (
@@ -572,23 +857,20 @@ export default function LandingPage() {
                     style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(4, 1fr)",
-                        gap: 2,
+                        gap: 10,
                     }}
                 >
                     {STEPS.map((step, i) => (
                         <div
                             key={step.num}
-                            className={`step-card ${stepsVisible ? "visible" : ""}`}
+                            className={`step-card ${
+                                stepsVisible ? "visible" : ""
+                            }`}
                             style={{
                                 transitionDelay: `${i * 0.1}s`,
                                 background: "#0d0d0d",
                                 border: "1px solid #161616",
-                                borderRadius:
-                                    i === 0
-                                        ? "14px 2px 2px 14px"
-                                        : i === 3
-                                          ? "2px 14px 14px 2px"
-                                          : "2px",
+                                borderRadius: "14px",
                                 padding: "32px 28px",
                             }}
                         >
@@ -638,7 +920,7 @@ export default function LandingPage() {
 
             <section
                 style={{
-                    padding: "0 40px 112px",
+                    padding: "0 20px 112px",
                     maxWidth: 1100,
                     margin: "0 auto",
                 }}
@@ -684,13 +966,12 @@ export default function LandingPage() {
                                 color: "#444",
                             }}
                         >
-                            yourname.vercel.app
+                            www.yourportfolio.com
                         </div>
                     </div>
-
                     <div
                         style={{
-                            padding: "48px 40px",
+                            padding: "32px 20px",
                             background: "#0a0a0a",
                             minHeight: 320,
                             position: "relative",
@@ -721,7 +1002,7 @@ export default function LandingPage() {
                         <div
                             style={{
                                 fontFamily: "'DM Serif Display', serif",
-                                fontSize: "clamp(40px, 7vw, 88px)",
+                                fontSize: "clamp(48px, 14vw, 88px)",
                                 fontWeight: 400,
                                 color: "#e8e3dc",
                                 lineHeight: 0.9,
@@ -729,18 +1010,25 @@ export default function LandingPage() {
                                 marginBottom: 32,
                             }}
                         >
-                            ALEX
+                            YOUR
                             <br />
                             <span
                                 style={{
-                                    paddingLeft: "clamp(20px, 3vw, 44px)",
+                                    paddingLeft: "clamp(16px, 5vw, 44px)",
                                     color: "rgba(255,255,255,0.18)",
                                 }}
                             >
-                                CHEN
+                                NAME
                             </span>
                         </div>
-                        <div style={{ display: "flex", gap: 10 }}>
+                        <div
+                            style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 8,
+                                marginBottom: 24,
+                            }}
+                        >
                             {["React · S", "TypeScript · A", "Node.js · A"].map(
                                 (tag) => (
                                     <span
@@ -757,16 +1045,14 @@ export default function LandingPage() {
                                     >
                                         {tag}
                                     </span>
-                                ),
+                                )
                             )}
                         </div>
                         <div
                             style={{
-                                position: "absolute",
-                                right: 40,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                width: 220,
+                                display: "block",
+                                width: "100%",
+                                maxWidth: 260,
                                 background: "rgba(10,10,10,0.9)",
                                 border: "1px solid #222",
                                 borderRadius: 12,
@@ -896,22 +1182,24 @@ export default function LandingPage() {
                             </span>
                         </h2>
                     </div>
-
                     <div
                         className="features-grid"
                         style={{
                             display: "grid",
                             gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: 1,
+                            gap: 2,
                         }}
                     >
                         {FEATURES.map((f, i) => (
                             <div
                                 key={f.title}
-                                className={`feature-card ${featuresVisible ? "visible" : ""}`}
+                                className={`feature-card ${
+                                    featuresVisible ? "visible" : ""
+                                }`}
                                 style={{
                                     transitionDelay: `${i * 0.08}s`,
-                                    padding: "32px 28px",
+                                    margin: "2px",
+                                    padding: "28px",
                                     background: "#0d0d0d",
                                     border: "1px solid #161616",
                                     borderRadius: 4,
@@ -990,19 +1278,6 @@ export default function LandingPage() {
                             pointerEvents: "none",
                         }}
                     />
-
-                    <p
-                        style={{
-                            fontFamily: "'DM Mono', monospace",
-                            fontSize: 11,
-                            letterSpacing: "0.22em",
-                            textTransform: "uppercase",
-                            color: "#444",
-                            marginBottom: 20,
-                        }}
-                    >
-                        Free forever
-                    </p>
                     <h2
                         style={{
                             fontFamily: "'DM Serif Display', serif",
@@ -1034,7 +1309,7 @@ export default function LandingPage() {
                         className="btn-primary"
                         style={{ fontSize: 15, padding: "16px 36px" }}
                     >
-                        Generate My Portfolio
+                        Make My Portfolio
                         <svg
                             viewBox="0 0 14 14"
                             fill="none"
@@ -1053,7 +1328,6 @@ export default function LandingPage() {
                 style={{ borderTop: "1px solid #111", padding: "32px 40px" }}
             >
                 <div
-                    className="footer-inner"
                     style={{
                         display: "flex",
                         justifyContent: "space-between",
@@ -1061,52 +1335,15 @@ export default function LandingPage() {
                         gap: 16,
                     }}
                 >
-                    <div
+                    <span
                         style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: 15,
+                            color: "#e8e3dc",
                         }}
                     >
-                        <div
-                            style={{
-                                width: 20,
-                                height: 20,
-                                borderRadius: "50%",
-                                background: "#e8e3dc",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <svg
-                                viewBox="0 0 14 14"
-                                fill="none"
-                                stroke="#080808"
-                                strokeWidth="2.4"
-                                width={9}
-                                height={9}
-                            >
-                                <circle cx="7" cy="7" r="3.5" />
-                                <circle
-                                    cx="7"
-                                    cy="7"
-                                    r="1"
-                                    fill="#080808"
-                                    stroke="none"
-                                />
-                            </svg>
-                        </div>
-                        <span
-                            style={{
-                                fontFamily: "'DM Serif Display', serif",
-                                fontSize: 15,
-                                color: "#e8e3dc",
-                            }}
-                        >
-                            mkfolio
-                        </span>
-                    </div>
+                        makemyfolio
+                    </span>
                     <p
                         style={{
                             fontFamily: "'DM Mono', monospace",
@@ -1115,20 +1352,9 @@ export default function LandingPage() {
                             letterSpacing: "0.1em",
                         }}
                     >
-                        © {new Date().getFullYear()} - Free & Open Source
+                        Copyright © {new Date().getFullYear()} | makemyfolio
                     </p>
                     <div style={{ display: "flex", gap: 24 }}>
-                        <a
-                            href="https://github.com"
-                            className="nav-link"
-                            style={{
-                                fontFamily: "'DM Mono', monospace",
-                                fontSize: 11,
-                                letterSpacing: "0.1em",
-                            }}
-                        >
-                            GitHub
-                        </a>
                         <Link
                             href="/generate"
                             className="nav-link"

@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model User {
+  id             String          @id
+  githubUsername String          @unique
+  name           String?
+  email          String?
+  avatarUrl      String?
+  joinedAt       DateTime        @default(now())
+  lastSeenAt     DateTime        @default(now())
+  generations    GenerationLog[]
+  rateLimit      RateLimit?
+
+  @@map("users")
+}
+
+model GenerationLog {
+  id         String   @id @default(cuid())
+  userId     String
+  templateId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("generation_logs")
+}
+
+model RateLimit {
+  userId  String   @id
+  count   Int      @default(1)
+  resetAt DateTime
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("rate_limits")
+}

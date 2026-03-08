@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { auth } from "../../../auth";
+import { prisma } from "../../lib/prisma";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! });
 
+const RATE_LIMIT = 5;
+const RATE_WINDOW_HOURS = 24;
+
 export interface GenerateRequest {
+    templateId?: string;
     name: string;
     title: string;
     bio: string;
@@ -180,6 +186,76 @@ IMPORTANT: Output must contain exactly ${
 
 export async function POST(request: NextRequest) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 },
+            );
+        }
+
+        const userId = session.user.id;
+        const now = new Date();
+
+        await prisma.user.upsert({
+            where: { id: userId },
+            create: {
+                id: userId,
+                githubUsername: session.user.login ?? "unknown",
+                name: session.user.name ?? null,
+                email: session.user.email ?? null,
+            },
+            update: {},
+        });
+
+        // Check and update rate limit
+        const rateLimit = await prisma.rateLimit.findUnique({
+            where: { userId },
+        });
+
+        if (rateLimit) {
+            if (now < rateLimit.resetAt) {
+                if (rateLimit.count >= RATE_LIMIT) {
+                    const resetIn = Math.ceil(
+                        (rateLimit.resetAt.getTime() - now.getTime()) /
+                            1000 /
+                            60 /
+                            60,
+                    );
+                    return NextResponse.json(
+                        {
+                            error: `Rate limit reached. You've used all ${RATE_LIMIT} generations for today. Resets in ${resetIn}h.`,
+                        },
+                        { status: 429 },
+                    );
+                }
+                await prisma.rateLimit.update({
+                    where: { userId },
+                    data: { count: { increment: 1 } },
+                });
+            } else {
+                await prisma.rateLimit.update({
+                    where: { userId },
+                    data: {
+                        count: 1,
+                        resetAt: new Date(
+                            now.getTime() + RATE_WINDOW_HOURS * 60 * 60 * 1000,
+                        ),
+                    },
+                });
+            }
+        } else {
+            await prisma.rateLimit.create({
+                data: {
+                    userId,
+                    count: 1,
+                    resetAt: new Date(
+                        now.getTime() + RATE_WINDOW_HOURS * 60 * 60 * 1000,
+                    ),
+                },
+            });
+        }
+
         const body: GenerateRequest = await request.json();
 
         if (!body.name || !body.skills?.length || !body.projects?.length) {
@@ -200,8 +276,6 @@ export async function POST(request: NextRequest) {
         });
 
         const raw = (response.text ?? "").trim();
-
-        // Strip any accidental markdown fences Gemini sometimes adds
         const cleaned = raw
             .replace(/^```json\s*/i, "")
             .replace(/^```\s*/i, "")
@@ -219,7 +293,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Basic shape validation
         if (
             !parsed.bio ||
             !parsed.title ||
@@ -232,7 +305,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json(parsed);
+        await prisma.generationLog.create({
+            data: {
+                userId,
+                templateId: body.templateId ?? "default",
+            },
+        });
+
+        const used =
+            rateLimit && now < rateLimit.resetAt ? rateLimit.count + 1 : 1;
+
+        return NextResponse.json({ ...parsed, remaining: RATE_LIMIT - used });
     } catch (err) {
         console.error("Generate error:", err);
         return NextResponse.json(

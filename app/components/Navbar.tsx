@@ -6,7 +6,7 @@ interface NavbarProps {
     name?: string;
 }
 
-export default function Navbar({ name = "Velos" }: NavbarProps) {
+export default function Navbar({ name = "Carbon" }: NavbarProps) {
     const [scrolled, setScrolled] = useState<boolean>(false);
 
     useEffect(() => {
@@ -113,7 +113,7 @@ export default function Navbar({ name = "Velos" }: NavbarProps) {
                                 {item}
                             </a>
                         </li>
-                    )
+                    ),
                 )}
             </ul>
 
