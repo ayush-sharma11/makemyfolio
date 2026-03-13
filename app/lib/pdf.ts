@@ -35,7 +35,7 @@ export function generatePDF(data: PortfolioData) {
         return yPos + 5.5;
     };
 
-    // ── Header ──────────────────────────────────────────
+    // Header
     y = 24;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(28);
@@ -66,7 +66,7 @@ export function generatePDF(data: PortfolioData) {
     rule(y);
     y += 8;
 
-    // ── Bio ─────────────────────────────────────────────
+    // Bio───
     y = label("About", y);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
@@ -151,7 +151,7 @@ export function generatePDF(data: PortfolioData) {
     rule(y);
     y += 8;
 
-    // ── Skills ──────────────────────────────────────────
+    // Skills
     if (y > 250) {
         doc.addPage();
         y = 20;
@@ -185,7 +185,7 @@ export function generatePDF(data: PortfolioData) {
         y += 7.5;
     }
 
-    // ── Footer ──────────────────────────────────────────
+    // Footer
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
