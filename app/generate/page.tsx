@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { track } from "@vercel/analytics";
 import { downloadHTML, PortfolioData } from "../lib/export";
 import { TEMPLATES } from "../templates";
 import { generatePDF } from "../lib/pdf";
@@ -183,6 +184,7 @@ export default function GeneratePage() {
                 setRemaining(data.remaining);
             }
             setStep(4);
+            track("portfolio_generated", { template: templateId });
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : "Something went wrong");
         } finally {
@@ -201,6 +203,7 @@ export default function GeneratePage() {
                 .toLowerCase()
                 .replace(/\s+/g, "-")}-portfolio.html`,
         );
+        track("portfolio_downloaded", { template: templateId });
     };
 
     const STEPS = ["Template", "Projects", "Details", "Download"];
@@ -1711,9 +1714,12 @@ export default function GeneratePage() {
                                 </button>
                                 <button
                                     className="bg"
-                                    onClick={() =>
-                                        generated && generatePDF(generated)
-                                    }
+                                    onClick={() => {
+                                        if (generated) {
+                                            generatePDF(generated);
+                                            track("resume_downloaded");
+                                        }
+                                    }}
                                 >
                                     Download resume.pdf
                                     <svg
