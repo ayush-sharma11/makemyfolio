@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
-import fs from "fs";
 import dotenv from "dotenv";
 import { prisma } from "./app/lib/prisma";
 
@@ -23,10 +22,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     callbacks: {
         async signIn({ user, profile }) {
-            fs.appendFileSync(
-                "auth-debug.log",
-                `signIn fired at ${new Date().toISOString()}\n`
-            );
             try {
                 const p = profile as unknown as {
                     id: number;
@@ -52,12 +47,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         lastSeenAt: new Date(),
                     },
                 });
-                fs.appendFileSync(
-                    "auth-debug.log",
-                    `upsert success at ${new Date().toISOString()}\n`
-                );
             } catch (err) {
-                fs.appendFileSync("auth-debug.log", `upsert error: ${err}\n`);
+                console.log(`upsert error: ${err}\n`);
             }
             return true;
         },
